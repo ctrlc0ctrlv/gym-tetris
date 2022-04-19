@@ -1,14 +1,14 @@
-from gym.envs.registration import registry, register, make, spec
+from gym.envs.registration import register
+# important import
 from gym_tetris.tetris_env import TetrisEnv
+
 # Pygame
 # ----------------------------------------
-for game in ['Tetris']:
-    nondeterministic = False
-    register(
-        id='{}-v0'.format(game),
-        entry_point='gym_tetris:TetrisEnv',
-        kwargs={},
-        timestep_limit=10000,
-        nondeterministic=nondeterministic,
-    )
-
+register(
+    id="Tetris-v0",
+    entry_point="gym_tetris:TetrisEnv",
+    kwargs={},
+    # changed timestep_limit to max_episode_steps
+    max_episode_steps=10000,
+    nondeterministic=False,
+)

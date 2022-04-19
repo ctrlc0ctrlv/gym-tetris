@@ -3,7 +3,10 @@ import gym
 from gym import spaces
 import tetris_engine as game
 
-SCREEN_WIDTH, SCREEN_HEIGHT = 640,480
+import os
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 
 
 class TetrisEnv(gym.Env):
@@ -16,6 +19,7 @@ class TetrisEnv(gym.Env):
         self.action_space = spaces.Discrete(len(self._action_set))
         self.observation_space = spaces.Box(low=0, high=255, shape=(SCREEN_HEIGHT, SCREEN_WIDTH, 3))
         self.viewer = None
+        self._seed = 0
 
 
     def _step(self, a):
@@ -54,4 +58,3 @@ class TetrisEnv(gym.Env):
             if self.viewer is None:
                 self.viewer = rendering.SimpleImageViewer()
             self.viewer.imshow(img)
-
