@@ -1,21 +1,29 @@
 # -*- coding: utf-8 -*-
 
+"""
+    Example of gym_tetris environment usage with random actions agent
+"""
+
 import logging
-import sys
 import gym
 
 # important import for env usage!
 import gym_tetris
-from gym.wrappers import monitor
+
+# gym.wrappers.monitor is now deprecated ->
+# -> so video_recorder and stats_recorder will be used
+from gym.wrappers.monitoring import video_recorder, stats_recorder
+import numpy as np
 
 
-class RandomAgent(object):
+class RandomAgent:
     """The world's simplest agent!"""
 
     def __init__(self, action_space):
         self.action_space = action_space
 
-    def act(self, observation, reward, done):
+    def act(self, *_):
+        """Randomly chooses an action from avaliable action space"""
         return self.action_space.sample()
 
 
@@ -33,10 +41,18 @@ if __name__ == "__main__":
     # directory, including one with existing data -- all monitor files
     # will be namespaced). You can also dump to a tempdir if you'd
     # like: tempfile.mkdtemp().
-    OUTDIR = "/tmp/random-agent-results"
 
-    env = gym.make("Tetris-v0" if len(sys.argv) < 2 else sys.argv[1])
-    env = monitor.Monitor(env, directory=OUTDIR, force=True)
+    OUTDIR = "./../../random-agent-results"
+
+    env = gym.make("Tetris-v0", state_mode="matrix")
+    env.reset()
+    # env = monitor.Monitor(env, directory=OUTDIR, force=True)
+    vid = video_recorder.VideoRecorder(
+        env=env, path=OUTDIR + "/tetris.mp4", enabled=True
+    )
+    stats = stats_recorder.StatsRecorder(
+        directory=OUTDIR, file_prefix="tetris",
+    )
 
     # This declaration must go *after* the monitor call, since the
     # monitor's seeding creates a new action_space instance with the
@@ -49,11 +65,21 @@ if __name__ == "__main__":
     done = False
 
     for i in range(EPISODE_COUNT):
+        stats.before_reset()
         ob = env.reset()
+        vid.capture_frame()
+        # print(ob)
+        stats.after_reset(ob)
 
         for j in range(MAX_STEPS):
             action = agent.act(ob, reward, done)
-            ob, reward, done, _ = env.step(action)
+            stats.before_step(action)
+            ob, reward, done, info = env.step(action)
+            vid.capture_frame()
+            # print(ob)
+            stats.after_step(
+                observation=ob, reward=reward, done=done, info=info
+            )
             if done:
                 break
             # Note there's no env.render() here.
@@ -62,11 +88,14 @@ if __name__ == "__main__":
             # to record video.
             # Video is not recorded every episode,
             # see capped_cubic_video_schedule for details.
+        stats.save_complete()
 
     # Dump result info to disk
+    vid.close()
+    stats.close()
     env.close()
 
+    logger.info("Successfully ran RandomAgent.")
     # Upload to the scoreboard. We could also do this from another
     # process if we wanted.
-    logger.info("Successfully ran RandomAgent.")
     # gym.gym.upload(OUTDIR)

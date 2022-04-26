@@ -1,6 +1,12 @@
-# Modified from Tetromino by lusob luis@sobrecueva.com
-# http://lusob.com
-# Released under a "Simplified BSD" license
+# -*- coding: utf-8 -*-
+
+"""
+    Modified from Tetromino by lusob luis@sobrecueva.com
+
+    http://lusob.com
+
+    Released under a "Simplified BSD" license
+"""
 
 import random
 import time
@@ -21,7 +27,7 @@ MOVEDOWNFREQ = 0.1
 XMARGIN = 0
 TOPMARGIN = 0
 
-#               R    G    B
+#       R    G    B
 WHITE = (255, 255, 255)
 GRAY = (185, 185, 185)
 BLACK = (0, 0, 0)
@@ -35,7 +41,7 @@ YELLOW = (155, 155, 0)
 LIGHTYELLOW = (175, 175, 20)
 
 BORDERCOLOR = BLUE
-BGCOLOR = BLACK
+BGCOLOR = WHITE
 TEXTCOLOR = WHITE
 TEXTSHADOWCOLOR = GRAY
 COLORS = (BLUE, GREEN, RED, YELLOW)
@@ -148,7 +154,7 @@ class GameState:
 
         pygame.display.update()
 
-    def frame_step(self, input):
+    def frame_step(self, inp):
         self.movingLeft = False
         self.movingRight = False
 
@@ -177,20 +183,20 @@ class GameState:
                 )  # can't fit a new piece on the self.board, so game over
 
         # moving the piece sideways
-        if (input[1] == 1) and self.isValidPosition(adjX=-1):
+        if (inp[1] == 1) and self.isValidPosition(adjX=-1):
             self.fallingPiece["x"] -= 1
             self.movingLeft = True
             self.movingRight = False
             self.lastMoveSidewaysTime = time.time()
 
-        elif (input[3] == 1) and self.isValidPosition(adjX=1):
+        elif (inp[3] == 1) and self.isValidPosition(adjX=1):
             self.fallingPiece["x"] += 1
             self.movingRight = True
             self.movingLeft = False
             self.lastMoveSidewaysTime = time.time()
 
         # rotating the piece (if there is room to rotate)
-        elif input[2] == 1:
+        elif inp[2] == 1:
             self.fallingPiece["rotation"] = (
                 self.fallingPiece["rotation"] + 1
             ) % len(PIECES[self.fallingPiece["shape"]])
@@ -199,7 +205,7 @@ class GameState:
                     self.fallingPiece["rotation"] - 1
                 ) % len(PIECES[self.fallingPiece["shape"]])
 
-        elif input[5] == 1:  # rotate the other direction
+        elif inp[5] == 1:  # rotate the other direction
             self.fallingPiece["rotation"] = (
                 self.fallingPiece["rotation"] - 1
             ) % len(PIECES[self.fallingPiece["shape"]])
@@ -209,7 +215,7 @@ class GameState:
                 ) % len(PIECES[self.fallingPiece["shape"]])
 
         # move the current piece all the way down
-        elif input[4] == 1:
+        elif inp[4] == 1:
             self.movingDown = False
             self.movingLeft = False
             self.movingRight = False
@@ -277,6 +283,7 @@ class GameState:
             reward = 100 * cleared
 
         image_data = pygame.surfarray.array3d(pygame.display.get_surface())
+        info = {}
         return image_data, reward, terminal
 
     def getImage(self):
@@ -316,7 +323,7 @@ class GameState:
             return BOARDHEIGHT
         else:
             return BOARDHEIGHT - stack_height
-            return float(num_blocks) / float(stack_height * BOARDWIDTH)
+            # return float(num_blocks) / float(stack_height * BOARDWIDTH)
 
     def isGameOver(self):
         return self.fallingPiece == None and not self.isValidPosition()
@@ -361,7 +368,7 @@ class GameState:
     def getBlankBoard(self):
         # create and return a new blank self.board data structure
         self.board = []
-        for i in range(BOARDWIDTH):
+        for _ in range(BOARDWIDTH):
             self.board.append([BLANK] * BOARDHEIGHT)
         return self.board
 
@@ -518,3 +525,38 @@ class GameState:
         DISPLAYSURF.blit(nextSurf, nextRect)
         # draw the "next" piece
         self.drawPiece(self.nextPiece, pixelx=WINDOWWIDTH - 120, pixely=100)
+
+    def frame_step_mtr(self, inp):
+        """
+            Redifines frame_step method but using board matrix instead of image
+
+            0 - empty field cell
+
+            1 - static (non-moving) tetramino cell
+
+            -1 - dynamic (moving) tetramino cell
+        """
+        # it is not optimal but still calling default method
+        _, reward, terminal = self.frame_step(inp=inp)
+        # output observation
+        obs = []
+        for i in range(BOARDWIDTH):
+            # setting free and static cells
+            obs.append(
+                list(map(lambda x: 0 if x == "." else 1, self.board[i]))
+            )
+        if self.fallingPiece is not None:
+            # now dynamic cells are going to be set
+            falling_shape = self.fallingPiece["shape"]
+            falling_rotation = self.fallingPiece["rotation"]
+            falling_x = self.fallingPiece["x"]
+            falling_y = self.fallingPiece["y"]
+            shapeToDraw = PIECES[falling_shape][falling_rotation]
+
+            for x in range(TEMPLATEWIDTH):
+                for y in range(TEMPLATEHEIGHT):
+                    if shapeToDraw[y][x] != BLANK:
+                        if falling_x + x >= 0 and falling_y + y >= 0:
+                            # else problems with python indexations
+                            obs[falling_x + x][falling_y + y] = -1
+        return obs, reward, terminal
