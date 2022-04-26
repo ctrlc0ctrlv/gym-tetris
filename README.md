@@ -4,6 +4,8 @@ Tetris OpenAI gym environment.
 
 ## Installing everything
 
+my Python version is 3.6.9
+
 gym_tetris requires PyGame installed:
 
 On OSX:
