@@ -5,15 +5,12 @@
 """
 
 import logging
-import gym
-
-# important import for env usage!
-import gym_tetris
 
 # gym.wrappers.monitor is now deprecated ->
 # -> so video_recorder and stats_recorder will be used
 from gym.wrappers.monitoring import video_recorder, stats_recorder
-import numpy as np
+
+from gym_tetris import tetris_env
 
 
 class RandomAgent:
@@ -44,7 +41,8 @@ if __name__ == "__main__":
 
     OUTDIR = "./../../random-agent-results"
 
-    env = gym.make("Tetris-v0", state_mode="matrix")
+    # env = gym.make("Tetris-v0", state_mode="matrix")
+    env = tetris_env.TetrisEnv(state_mode="matrix")
     env.reset()
     # env = monitor.Monitor(env, directory=OUTDIR, force=True)
     vid = video_recorder.VideoRecorder(

@@ -8,7 +8,7 @@ import os
 import numpy as np
 import gym
 from gym import spaces
-import tetris_engine as game
+import gym_tetris.tetris_engine as game
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
@@ -54,8 +54,12 @@ class TetrisEnv(gym.Env):
         return self.game_state.getImage()
 
     @property
-    def _n_actions(self):
+    def n_actions(self):
         return len(self._action_set)
+
+    @property
+    def state_shape(self):
+        return self.observation_space.shape
 
     # return: (states, observations)
     def reset(self, **_):
