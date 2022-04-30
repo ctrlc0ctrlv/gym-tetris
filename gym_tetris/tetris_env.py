@@ -30,7 +30,7 @@ class TetrisEnv(gym.Env):
         self.state_mode = state_mode
         if self.state_mode == "matrix":
             # now each state is a matrix 20x10
-            self.observation_space = spaces.Box(low=0, high=2, shape=(20, 10))
+            self.observation_space = spaces.Box(low=0, high=2, shape=(200,))
             self.frame_step = self.game_state.frame_step_mtr
         else:
             # now each state is an RGB picture
@@ -47,7 +47,12 @@ class TetrisEnv(gym.Env):
         state, reward, terminal = self.frame_step(self._action_set)
         if self.state_mode == "matrix":
             # need to rotate state matrix for user convenience
-            return np.rot90(np.asarray(state), k=-1), reward, terminal, {}
+            return (
+                np.ravel(np.rot90(np.asarray(state), k=-1)),
+                reward,
+                terminal,
+                {},
+            )
         return state, reward, terminal, {}
 
     def _get_image(self):
@@ -77,7 +82,7 @@ class TetrisEnv(gym.Env):
         state, _, _ = self.frame_step(do_nothing)
         if self.state_mode == "matrix":
             # need to rotate state matrix for user convenience
-            return np.rot90(np.asarray(state), k=-1)
+            return np.ravel(np.rot90(np.asarray(state), k=-1))
         return state
 
     def render(self, mode="human", close=False):
