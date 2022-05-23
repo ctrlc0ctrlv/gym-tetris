@@ -11,6 +11,7 @@
 import random
 import time
 import pygame
+import numpy as np
 from pygame.locals import *
 
 FPS = 25
@@ -259,7 +260,8 @@ class GameState:
             self.lines += cleared
             self.total_lines += cleared
 
-            reward = self.height - self.getHeight()
+            # reward = self.height - self.getHeight()
+            reward = cleared
             self.height = self.getHeight()
 
             self.level, self.fallFreq = self.calculateLevelAndFallFreq()
@@ -280,7 +282,8 @@ class GameState:
         pygame.display.update()
 
         if cleared > 0:
-            reward = 100 * cleared
+            # reward = 100 * cleared
+            reward = cleared
 
         image_data = pygame.surfarray.array3d(pygame.display.get_surface())
         info = {}
@@ -539,12 +542,18 @@ class GameState:
         # it is not optimal but still calling default method
         _, reward, terminal = self.frame_step(inp=inp)
         # output observation
-        obs = []
+        obs = np.zeros((10, 22))
         for i in range(BOARDWIDTH):
             # setting free and static cells
-            obs.append(
+            obs[i, :-2] = np.asarray(
                 list(map(lambda x: 0 if x == "." else 1, self.board[i]))
             )
+            # adding heights
+            obs[i, -2] = sum(obs[i])
+            # print("obs:", np.asarray(obs[-1][:-1]))
+            obs[i, -1] = (
+                20 - np.argmax(obs[i, :-2]) - obs[i, -2]
+            ) % 20
         if self.fallingPiece is not None:
             # now dynamic cells are going to be set
             falling_shape = self.fallingPiece["shape"]

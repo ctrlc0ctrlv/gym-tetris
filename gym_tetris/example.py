@@ -66,15 +66,18 @@ if __name__ == "__main__":
         stats.before_reset()
         ob = env.reset()
         vid.capture_frame()
-        # print(ob)
+
         stats.after_reset(ob)
 
         for j in range(MAX_STEPS):
             action = agent.act(ob, reward, done)
             stats.before_step(action)
             ob, reward, done, info = env.step(action)
+
             vid.capture_frame()
-            # print(ob)
+            if j == 20:
+                print(ob)
+                break
             stats.after_step(
                 observation=ob, reward=reward, done=done, info=info
             )
